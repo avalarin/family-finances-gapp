@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Import a report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+
+<body>
+    <script>
+        // Prevent forms from submitting.
+        function preventFormSubmit() {
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+        window.addEventListener('load', preventFormSubmit);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var elems = document.querySelectorAll('select');
+            var instances = M.FormSelect.init(elems);
+        });
+
+        function onSubmit(formObject) {
+            document.getElementById('result').innerText = "Uploading...";
+            document.getElementById('progress').style.display = 'block';
+            document.getElementById('submit').style.display = 'none';
+
+            google.script.run
+                .withSuccessHandler(uploadHandler)
+                .withFailureHandler(failureHandler)
+                .handleForm(formObject);
+        }
+
+        function uploadHandler(result) {
+            document.getElementById('progress').style.display = 'none';
+            document.getElementById('submit').style.display = 'block';
+            document.getElementById('result').innerText = "File uploaded, " + result.addedRows + " rows from " +
+                result.totalRows + " has been added";
+        }
+
+        function failureHandler(result) {
+            document.getElementById('progress').style.display = 'none';
+            document.getElementById('submit').style.display = 'block';
+            document.getElementById('result').innerText = "Failed " + result;
+        }
+    </script>
+    <div class="container">
+        <div class="section">
+            <form id="form" onsubmit="onSubmit(this)">
+                <h4>Import a report</h4>
+                <input type="hidden" name="callbackId" value="<?= data.uploadCallbackId ?>" />
+
+                <div class="input-field">
+                    <select name="type" required>
+                        <option value="alfa-csv">Alfa-Bank CSV Report</option>
+                    </select>
+                    <label>Type</label>
+                </div>
+
+                <div class="input-field">
+                    <select name="account" required>
+                        <? for (var i = 0; i < data.accounts.length; i++) { ?>
+                        <option value="<?= data.accounts[i].name ?>"><?= data.accounts[i].name ?></option>
+                        <? } ?>
+                    </select>
+                    <label>Account</label>
+                </div>
+
+                <div class="file-field input-field">
+                    <div class="btn btn-small">
+                        <span>File</span>
+                        <input type="file" name="file" required>
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+
+                <input class="btn btn-small" type="submit" value="Import" id="submit" />
+
+                <div class="progress" style="display: none" id="progress">
+                    <div class="indeterminate"></div>
+                </div>
+
+                <p id="result"></p>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
